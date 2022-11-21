@@ -24,8 +24,8 @@ v = np.empty(shape, dtype=np.float32)
 v[:, int(nx/2):] = 2.1 # top
 v[:, :int(nx/2)] = 3.5 # bottom
 # v[150:170, 50:70] = 4.6. # box
-# NOTE plot velocity, we need to rotate 90 for visualing purpose. Devito uses different coordinate from plt.imshow.
-# S.plot_velocity(v, 'Two Layers')
+# NOTE plot velocity, we need to rotate 90 for visualing purpose. Devito uses different coordinate from plt.imshow. np.transpose uses for flip the matrix for visualization only.
+S.plot_velocity_custom(np.transpose(v), 'Two Layers') 
 model = Model(vp=v, origin=origin, shape=shape, spacing=spacing, space_order=10, nbl=100, bcs='damp')
 
 '''
@@ -44,8 +44,6 @@ src = RickerSource(
 	grid=model.grid,
 	f0=f0,
 	time_range=time_range)  
-# source layout
-# src.coordinates.data[0, :] = np.array(model.domain_size) * .5 
 src.coordinates.data[0, :] = (np.array(model.domain_size) - (nb*2*6)) * .5 
 src.coordinates.data[0, -1] = 50 - nb*6  
 # NOTE reciever positions
@@ -115,7 +113,6 @@ step 6: load computed snapshots from .npy files and plot wave propagation in eac
 plt.rcParams['figure.figsize'] = (20, 20)  # Increases figure size
 imcnt = 1 # Image counter for plotting
 plot_num = 5 # Number of images to plot
-# plot_num = 10 # Number of images to plot
 snap = '../snapshots/timestep_'
 for i in range(0, plot_num):
 	imcnt = imcnt + 1
@@ -129,9 +126,6 @@ for i in range(0, plot_num):
 	dummy = np.load(snap + str(imcnt) + '.npy')
 	plt.imshow(dummy, cmap='gray')
 	plt.title('Time Step: ' + str(imcnt))
-	# plt.xlim(40, 200)
-	# plt.ylim(200, 0)
 	# save_file = ('timestep_' + str(imcnt))
 	# plt.savefig('image_out/' + save_file + '.svg', format='svg', bbox_inches='tight', transparent=True, pad_inches=0)
 	plt.show()
-	sdfs

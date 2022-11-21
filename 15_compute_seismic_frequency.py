@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 #-----------------------------------------------------------------------------------------#
 
-seismic = imageio.imread('image_out/seismic.png') / 255
+seismic = imageio.imread('data/seismic.png') / 255
 seismic = seismic[:, :, 0]
 plt.imshow(seismic)
-# plt.show()
+plt.show()
 
 avg_freq = 0.; count = 0
 beg_X = 150; end_X = 385
