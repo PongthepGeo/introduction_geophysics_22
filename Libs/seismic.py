@@ -7,6 +7,7 @@ from scipy.ndimage import gaussian_filter
 from examples.seismic import Receiver, RickerSource, Model, plot_velocity, TimeAxis, AcquisitionGeometry
 from examples.seismic.acoustic import AcousticWaveSolver
 from devito import TimeFunction, Eq, solve, Operator, ConditionalDimension
+from sklearn.cluster import KMeans
 #-----------------------------------------------------------------------------------------#
 
 def plot_velocity_custom(model, title):
@@ -77,7 +78,8 @@ def wave_propagation_pipeline(space_order,
 	step 1: define model size and geometry. For implicity, the model size is fixed by using nx x nx, 401 x 401. In other words, we use image having pixel x pixel, 401 x 401.
 	'''
 
-	nx = 401; nz = 401; nb = 100
+	# nx = 401; nz = 401; nb = 100
+	nx = image.shape[1]; nz = image.shape[0]; nb = 100
 	shape = (nx, nz)
 	spacing = (6., 6.) # grid spacing
 	origin = (0., 0.)
@@ -195,7 +197,8 @@ def receiver_pipeline(space_order,
 	step 1: define model size and geometry. For implicity, the model size is fixed by using nx x nx, 401 x 401. In other words, we use image having pixel x pixel, 401 x 401.
 	'''
 
-	nx = 401; nz = 401; nb = 100
+	# nx = 401; nz = 401; nb = 100
+	nx = image.shape[1]; nz = image.shape[0]; nb = 100
 	shape = (nx, nz)
 	spacing = (6., 6.) # grid spacing
 	origin = (0., 0.)
@@ -214,8 +217,8 @@ def receiver_pipeline(space_order,
 	src.coordinates.data[0, :] = np.array(model.domain_size) * .5
 	src.coordinates.data[0, -1] = source_depth  # source depth
 	# NOTE reciever positions
-	rec = Receiver(name='rec', grid=model.grid, npoint=101, time_range=time_range)
-	rec.coordinates.data[:, 0] = np.linspace(0, model.domain_size[0], num=101)
+	rec = Receiver(name='rec', grid=model.grid, npoint=401, time_range=time_range)
+	rec.coordinates.data[:, 0] = np.linspace(0, model.domain_size[0], num=401)
 	rec.coordinates.data[:, 1] = source_depth  # receiver depth
 	depth = rec.coordinates.data[:, 1]  
 	geometry = AcquisitionGeometry(model, rec.coordinates.data, src.coordinates.data, simulation_time_start, simulation_time_stop, f0=source_frequency, src_type='Ricker')
@@ -228,4 +231,12 @@ def receiver_pipeline(space_order,
 	# TODO solve forward modeling
 	solver = AcousticWaveSolver(model, geometry, space_order=space_order)
 	true_d , _, _ = solver.forward(vp=model.vp)
-	plot_processed_shot(true_d.data, 98, simulation_time_start, simulation_time_stop)
+	plot_processed_shot(true_d.data, 99, simulation_time_start, simulation_time_stop)
+
+def compute_kmeans(data, number_of_classes):
+	vector_data = data.reshape(-1, 1) 
+	random_centroid = 42 # interger number range 0-42
+	kmeans = KMeans(n_clusters = number_of_classes, random_state = random_centroid).fit(vector_data)
+	kmeans = kmeans.cluster_centers_[kmeans.labels_]
+	kmeans = kmeans.reshape(data.shape)
+	return kmeans 

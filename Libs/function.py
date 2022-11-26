@@ -8,6 +8,7 @@ from skimage.transform import resize
 from scipy.ndimage import gaussian_filter
 from scipy import signal
 from statistics import median
+from scipy.signal import butter, lfilter
 
 def sin_cos(amplitude, frequency, time, phase, choice):
 	'''
@@ -66,6 +67,33 @@ def reflectivity(vp, frequency):
 		conv[:, col] = signal.convolve((reflectivity[:, col]*-1), wiggle, mode='same') / sum(wiggle)
 	laplacian = cv2.Laplacian(conv, cv2.CV_64F)
 	return laplacian
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+def ref_lap_but(vp, frequency):
+	wiggle = ricker(frequency)
+	(ROWs, COLs) = vp.shape
+	reflectivity = np.zeros_like(vp, dtype='float')
+	conv = np.zeros_like(vp, dtype='float')
+	rho = 2700
+	for col in range (0, COLs):
+		for row in range (0, ROWs-1):
+			reflectivity[row, col] = (vp[row+1, col]*rho - vp[row, col]*rho) / (vp[row+1, col]*rho + vp[row, col]*rho)
+		# flip polarity
+		conv[:, col] = signal.convolve((reflectivity[:, col]*-1), wiggle, mode='same') / sum(wiggle)
+	laplacian = cv2.Laplacian(conv, cv2.CV_64F)
+	lap_filter = butter_bandpass_filter(laplacian, 3, 30, len(laplacian), order=2)
+	return lap_filter
 
 def scaling_velocity(y, lowest_value, highest_value):
 	y = (y - y.min()) / (y.max() - y.min())
